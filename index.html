@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>采购录入工具-手机版优化版</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f6f8fb;--card:#fff;--text:#172033;--muted:#64748b;--border:#d7e0ec;--primary:#2563eb;--danger:#dc2626;--danger-bg:#fee2e2;--warn:#d97706;--warn-bg:#fef3c7;--ok:#16a34a;--shadow:0 10px 28px rgba(15,23,42,.08)}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif;color:var(--text);background:var(--bg)}
+.app{max-width:1560px;margin:0 auto;padding:22px}h1{margin:0 0 18px;font-size:26px}h2{margin:0 0 14px;font-size:20px}h3{margin:0 0 12px;font-size:17px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow);margin-bottom:16px}
+.toolbar,.form-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}.form-row{margin-bottom:10px}
+label{display:inline-flex;align-items:center;gap:6px;font-size:14px;white-space:nowrap}
+input,select,button{height:34px;border-radius:8px;border:1px solid var(--border);font-size:14px;padding:0 10px;background:#fff;color:var(--text)}
+button{cursor:pointer;transition:.16s ease}button:hover{transform:translateY(-1px)}button:disabled{opacity:.55;cursor:not-allowed;transform:none}
+input[type=number]{min-width:105px}input[type=text]{min-width:150px}input[type=date]{min-width:145px}select{min-width:165px}
+.primary{background:var(--primary);color:#fff;border-color:var(--primary)}.danger{background:var(--danger-bg);color:var(--danger);border-color:#fecaca}.warn{background:var(--warn-bg);color:var(--warn);border-color:#fde68a}.ghost{background:#f8fafc}.ok{background:#dcfce7;color:var(--ok);border-color:#bbf7d0}
+.table-wrap{width:100%;overflow:auto;border:1px solid var(--border);border-radius:12px;background:#fff}table{width:100%;border-collapse:collapse;min-width:980px;background:#fff}
+th,td{border-bottom:1px solid var(--border);border-right:1px solid var(--border);padding:8px;text-align:center;font-size:14px;vertical-align:middle}th:last-child,td:last-child{border-right:none}tr:last-child td{border-bottom:none}th{background:#f3f6fb;font-weight:700}td input,td select{width:100%;border-radius:6px}.num{text-align:right}
+.summary{display:flex;justify-content:flex-end;gap:18px;margin-top:14px;font-weight:700}.summary strong{color:#111827}.grid{display:grid;grid-template-columns:repeat(2,minmax(280px,1fr));gap:16px}.stat-panel{border:1px solid var(--border);border-radius:12px;padding:14px;background:#fbfdff}.result{margin:12px 0;font-weight:700}.hint{font-size:13px;color:var(--muted);line-height:1.7;margin-top:8px}.status{margin-left:auto;color:var(--muted);font-size:13px}
+.pill{display:inline-flex;align-items:center;min-height:26px;padding:3px 8px;border-radius:999px;background:#eef2ff;color:#3730a3;font-size:13px;font-weight:600}
+.match-box{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;margin:12px 0}.match-item{border:1px solid var(--border);border-radius:10px;padding:10px;background:#fff}.match-label{color:var(--muted);font-size:12px;margin-bottom:6px}.match-value{font-weight:700;word-break:break-all}
+.highlight-row td{animation:flash 2.2s ease}@keyframes flash{0%,70%{background:#fef3c7}100%{background:#fff}}
+.toast{position:fixed;right:22px;bottom:22px;background:#111827;color:#fff;padding:10px 14px;border-radius:10px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transform:translateY(10px);transition:.2s ease;z-index:99;max-width:min(520px,calc(100vw - 44px))}.toast.show{opacity:1;transform:translateY(0)}
+dialog{border:none;border-radius:14px;padding:0;width:min(1080px,calc(100vw - 32px));box-shadow:0 20px 80px rgba(15,23,42,.28)}dialog::backdrop{background:rgba(15,23,42,.38)}.modal{padding:16px;background:#fff}.modal-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}.modal-body{max-height:66vh;overflow:auto;border:1px solid var(--border);border-radius:10px}.close-x{width:34px;padding:0;border-radius:50%}.empty{padding:22px;color:var(--muted);text-align:center}
+.nav-bar{position:sticky;top:0;z-index:20;background:rgba(246,248,251,.92);backdrop-filter:blur(8px);padding:10px 0 12px;margin:-6px 0 10px;display:flex;gap:8px;flex-wrap:wrap}.nav-bar button{height:30px}.duplicate-warning{border-color:#dc2626!important;background:#fff1f2!important}.mini-table{margin-top:10px}.section-title-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.badge{display:inline-flex;align-items:center;border-radius:999px;padding:3px 8px;background:#eef2ff;color:#3730a3;font-size:12px;font-weight:700}
+
+/* 手机端增强优化 */
+.mobile-tip{display:none}
+@media(max-width:780px){
+  body{font-size:15px}
+  .app{padding:10px}
+  h1{font-size:22px;margin-bottom:10px}
+  h2{font-size:18px}
+  h3{font-size:16px}
+  .card{padding:12px;border-radius:12px;margin-bottom:12px}
+  .nav-bar{position:sticky;top:0;z-index:50;margin:0 -10px 10px;padding:8px 10px;background:rgba(246,248,251,.96);box-shadow:0 4px 14px rgba(15,23,42,.06)}
+  .nav-bar button{flex:1 1 calc(33.333% - 8px);height:38px;font-size:14px;padding:0 6px}
+  .toolbar{gap:8px}
+  .toolbar label{width:100%;justify-content:space-between}
+  .toolbar label select,.toolbar label input{flex:1;min-width:0}
+  .toolbar button,.toolbar .ghost,.toolbar .primary,.toolbar .danger,.toolbar .warn{height:42px;min-width:calc(50% - 6px);flex:1 1 calc(50% - 6px);font-size:14px}
+  input,select,button{height:42px;font-size:16px}
+  input[type="text"],input[type="number"],input[type="date"],select{min-width:0}
+  .status{font-size:13px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:8px;width:100%}
+  .mobile-tip{display:block;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:10px;padding:10px;margin:8px 0;font-size:13px;line-height:1.6}
+  .table-wrap{border-radius:10px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{min-width:1040px}
+  th,td{padding:8px;font-size:13px}
+  td input,td select{height:38px;font-size:15px}
+  .summary{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
+  .summary div{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px}
+  .grid{grid-template-columns:1fr;gap:10px}
+  .stat-panel{padding:12px}
+  .form-row{display:grid;grid-template-columns:1fr;gap:8px}
+  .form-row label{width:100%;justify-content:space-between}
+  .form-row label input,.form-row label select{width:100%;flex:1}
+  .form-row button{width:100%}
+  .match-box{grid-template-columns:1fr;gap:8px}
+  .match-item{padding:9px}
+  .match-value input{width:100%}
+  .toast{left:10px;right:10px;bottom:12px;max-width:none;text-align:center}
+  dialog{width:calc(100vw - 16px)}
+  .modal{padding:10px}
+  .modal-body{max-height:72vh}
+  .close-x{height:38px;width:38px}
+}
+@media(max-width:420px){
+  .nav-bar button{flex-basis:calc(50% - 8px)}
+  .toolbar button,.toolbar .ghost,.toolbar .primary,.toolbar .danger,.toolbar .warn{min-width:100%;flex-basis:100%}
+}
+
+@media(max-width:980px){.match-box{grid-template-columns:repeat(2,minmax(150px,1fr))}}@media(max-width:780px){.app{padding:14px}.grid{grid-template-columns:1fr}.summary{justify-content:flex-start;flex-wrap:wrap}.status{width:100%;margin-left:0}.match-box{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main class="app">
+<h1>采购录入</h1>
+<div class="nav-bar">
+  <button class="ghost" onclick="scrollToSection('purchaseSection')">采购录入</button>
+  <button class="ghost" onclick="scrollToSection('statSection')">日期统计</button>
+  <button class="ghost" onclick="scrollToSection('damageSection')">货损统计</button>
+  <button class="ghost" onclick="showProductDb()">产品单价库</button>
+  <button class="ghost" onclick="scrollToSection('backupSection')">数据备份</button>
+  <button class="ghost" onclick="showHistory()">历史记录</button>
+</div>
+
+<section class="card">
+  <div class="toolbar">
+    <label>店铺：<select id="storeSelect"></select></label>
+    <button id="addStoreBtn" class="ghost">＋ 添加店铺</button>
+    <button id="renameStoreBtn" class="ghost">✎ 修改店铺名称</button>
+    <button id="deleteStoreBtn" class="danger">🗑 删除店铺</button>
+    <label>选择日期：<input id="purchaseDate" type="date"></label>
+    <button id="saveBtn" class="primary">💾 立即保存</button>
+    <button id="queryCargoBtn" class="ghost">🔍 查询货件编码</button>
+    <button id="queryProductBtn" class="ghost">🔎 查询产品名称</button>
+    <button id="productDbBtn" class="ghost">📦 产品单价库</button>
+    <button id="historyBtn" class="ghost">📜 历史记录</button>
+    <button id="clearCurrentBtn" class="warn">清空当前表格</button>
+    <button id="clearAllBtn" class="danger">清除所有数据</button>
+    <span id="saveStatus" class="status">未保存</span>
+  </div>
+</section>
+
+<section class="card" id="purchaseSection">
+  <div class="mobile-tip">手机提示：表格可以左右滑动查看全部字段；建议经常导出 JSON 备份，避免清理浏览器缓存导致数据丢失。</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:72px">序号</th>
+          <th>货件编码</th>
+          <th>产品名称</th>
+          <th style="width:160px">单价成本</th>
+          <th style="width:130px">数量</th>
+          <th style="width:170px">货件合计</th>
+          <th style="width:190px">操作</th>
+        </tr>
+      </thead>
+      <tbody id="entryBody"></tbody>
+    </table>
+  </div>
+  <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <button id="addRowBtn" class="ghost">新增一行</button>
+    <span class="hint">货件编码按回车会自动新增一行；填写产品名称后自动匹配产品单价库；修改后 8 秒自动保存；货件编码必须唯一。</span>
+  </div>
+  <div class="summary">
+    <div>总数量：<strong id="totalQty">0</strong></div>
+    <div>总货件合计：<strong id="totalAmount">0.00</strong></div>
+  </div>
+</section>
+
+<section class="card" id="statSection">
+  <h2>日期区间统计</h2>
+  <div class="grid">
+    <div class="stat-panel">
+      <h3>单店铺日期区间统计</h3>
+      <div class="form-row">
+        <label>开始日期 <input id="singleStart" type="date"></label>
+        <label>结束日期 <input id="singleEnd" type="date"></label>
+      </div>
+      <button id="singleStatBtn" class="primary">统计</button>
+      <div class="result">单店合计：<span id="singleStatAmount">0.00</span></div>
+      <button id="singleExportBtn" class="ghost">下载 Excel</button>
+    </div>
+    <div class="stat-panel">
+      <h3>总日期区间统计</h3>
+      <div class="form-row">
+        <label>开始日期 <input id="allStart" type="date"></label>
+        <label>结束日期 <input id="allEnd" type="date"></label>
+      </div>
+      <button id="allStatBtn" class="primary">统计</button>
+      <div class="result">总合计：<span id="allStatAmount">0.00</span></div>
+      <button id="allExportBtn" class="ghost">下载 Excel</button>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="damageSection">
+  <h2>货损统计</h2>
+  <div class="stat-panel">
+    <h3>货损录入区</h3>
+    <div class="form-row">
+      <label>货件编码 <input id="damageCargoCode" type="text" placeholder="输入后回车"></label>
+      <button id="damageMatchBtn" class="ghost">匹配采购数据</button>
+      <span id="damageMatchStatus" class="pill">等待输入货件编码</span>
+    </div>
+    <div class="match-box">
+      <div class="match-item"><div class="match-label">采购日期</div><div id="matchPurchaseDate" class="match-value">-</div></div>
+      <div class="match-item"><div class="match-label">店铺</div><div id="matchStore" class="match-value">-</div></div>
+      <div class="match-item"><div class="match-label">产品名称</div><div id="matchProductName" class="match-value">-</div></div>
+      <div class="match-item"><div class="match-label">单价成本</div><div id="matchUnitCost" class="match-value">-</div></div>
+      <div class="match-item"><div class="match-label">采购数量</div><div id="matchQuantity" class="match-value">-</div></div>
+      <div class="match-item"><div class="match-label">采购金额</div><div id="matchPurchaseAmount" class="match-value">-</div></div>
+      <div class="match-item"><div class="match-label">货损登记日期</div><div class="match-value"><input id="damageDate" type="date"></div></div>
+      <div class="match-item"><div class="match-label">备注</div><div class="match-value"><input id="damageRemark" type="text" placeholder="可选"></div></div>
+    </div>
+    <div class="form-row">
+      <label>货损数量 <input id="damageQuantity" type="number" min="0" step="1" value="1"></label>
+      <label>货损金额 <input id="damageAmount" type="number" min="0" step="0.01" value="0.00"></label>
+      <label>货损类型
+        <select id="damageType">
+          <option value="">请选择，选择后自动保存</option>
+          <option value="退货赔偿">退货赔偿</option>
+          <option value="丢件">丢件</option>
+          <option value="破损">破损</option>
+          <option value="少件">少件</option>
+          <option value="平台抽检">平台抽检</option>
+          <option value="其他">其他</option>
+        </select>
+      </label>
+    </div>
+    <p class="hint">匹配货件编码后会自动带出采购日期、店铺、产品名称、单价、数量和金额；选择货损类型后自动保存货损记录。</p>
+  </div>
+
+  <div class="stat-panel" style="margin-top:16px">
+    <h3>货损日期区间查询</h3>
+    <div class="form-row">
+      <label>统计范围
+        <select id="damageScope"><option value="all">总货损</option><option value="current">当前店铺货损</option></select>
+      </label>
+      <label>开始日期 <input id="damageStart" type="date"></label>
+      <label>结束日期 <input id="damageEnd" type="date"></label>
+      <label>货损类型
+        <select id="damageTypeFilter">
+          <option value="all">全部类型</option>
+          <option value="退货赔偿">退货赔偿</option>
+          <option value="丢件">丢件</option>
+          <option value="破损">破损</option>
+          <option value="少件">少件</option>
+          <option value="平台抽检">平台抽检</option>
+          <option value="其他">其他</option>
+        </select>
+      </label>
+      <button id="damageStatBtn" class="primary">查看货损</button>
+      <button id="damageExportBtn" class="ghost">导出当前货损统计</button>
+    </div>
+    <div class="summary" style="justify-content:flex-start">
+      <div>货损总数量：<strong id="damageTotalQty">0</strong></div>
+      <div>货损总金额：<strong id="damageTotalAmount">0.00</strong></div>
+    </div>
+    <div id="damageResultWrap" class="table-wrap" style="margin-top:12px"></div>
+  </div>
+</section>
+
+<section class="card" id="backupSection">
+  <h2>数据备份</h2>
+  <div class="toolbar">
+    <button id="exportBackupBtn" class="primary">导出备份</button>
+    <button id="manualRestorePointBtn" class="ghost">创建恢复点</button>
+    <label class="ghost" style="padding:0 10px;border:1px solid var(--border);border-radius:8px;height:34px;cursor:pointer;background:#fff;display:inline-flex;align-items:center">
+      导入 JSON 备份
+      <input id="importJsonInput" type="file" accept=".json" hidden>
+    </label>
+    <button id="restoreBeforeImportBtn" class="warn">返回本次导入前</button>
+  </div>
+  <p class="hint">点击“导出备份”会同时下载 Excel 和 JSON 两个文件。导入 JSON 前会自动保存浏览器内部快照并下载“导入前自动备份”。“返回本次导入前”可恢复最近一次导入前的数据，需要密码 555。</p><div class="mobile-tip">手机使用时，建议优先用 JSON 备份。Excel 下载在部分手机浏览器中可能不稳定，但 JSON 恢复最可靠。</div>
+</section>
+</main>
+
+<datalist id="productNameList"></datalist>
+<dialog id="mainDialog">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="dialogTitle">查询结果</h3>
+      <button class="close-x" id="dialogCloseBtn">×</button>
+    </div>
+    <div id="dialogBody" class="modal-body"></div>
+  </div>
+</dialog>
+<div id="toast" class="toast"></div>
+
+<script>
+const STORAGE_KEY='purchase_tool_final_v4';
+const BEFORE_IMPORT_KEY='purchase_tool_before_import_v4';
+const MANUAL_RESTORE_KEY='purchase_tool_manual_restore_v4';
+const OLD_KEYS=['purchase_tool_final_v3','purchase_tool_v2','purchase_tool_v1'];
+const OP_PASSWORD='555';
+const AUTO_SAVE_DELAY=8000;
+const MAX_LOGS=500;
+const $=id=>document.getElementById(id);
+const els={
+  storeSelect:$('storeSelect'),purchaseDate:$('purchaseDate'),entryBody:$('entryBody'),totalQty:$('totalQty'),totalAmount:$('totalAmount'),saveStatus:$('saveStatus'),
+  singleStart:$('singleStart'),singleEnd:$('singleEnd'),allStart:$('allStart'),allEnd:$('allEnd'),singleStatAmount:$('singleStatAmount'),allStatAmount:$('allStatAmount'),
+  damageCargoCode:$('damageCargoCode'),damageMatchBtn:$('damageMatchBtn'),damageMatchStatus:$('damageMatchStatus'),matchPurchaseDate:$('matchPurchaseDate'),matchStore:$('matchStore'),matchProductName:$('matchProductName'),matchUnitCost:$('matchUnitCost'),matchQuantity:$('matchQuantity'),matchPurchaseAmount:$('matchPurchaseAmount'),damageDate:$('damageDate'),damageRemark:$('damageRemark'),damageQuantity:$('damageQuantity'),damageAmount:$('damageAmount'),damageType:$('damageType'),damageScope:$('damageScope'),damageStart:$('damageStart'),damageEnd:$('damageEnd'),damageTypeFilter:$('damageTypeFilter'),damageTotalQty:$('damageTotalQty'),damageTotalAmount:$('damageTotalAmount'),damageResultWrap:$('damageResultWrap'),
+  dialog:$('mainDialog'),dialogTitle:$('dialogTitle'),dialogBody:$('dialogBody'),toast:$('toast')
+};
+let data=loadData(),currentRows=[],activeStoreId='',activeDate='',dirty=false,autoSaveTimer=null,currentDamageMatch=null,highlightCargoCode='';
+
+init();
+
+function init(){
+  const today=dateValue(new Date());
+  [els.purchaseDate,els.singleStart,els.singleEnd,els.allStart,els.allEnd,els.damageDate,els.damageStart,els.damageEnd].forEach(x=>x.value=today);
+  renderProductDatalist();renderStores();activeStoreId=els.storeSelect.value;activeDate=els.purchaseDate.value;loadCurrentRows();bindEvents();runStat('single',false);runStat('all',false);runDamageStat(false);setStatus('已加载本地数据');
+}
+function bindEvents(){
+  $('addStoreBtn').onclick=addStore;$('renameStoreBtn').onclick=renameStore;$('deleteStoreBtn').onclick=deleteStore;$('addRowBtn').onclick=addRowAndFocus;$('saveBtn').onclick=()=>saveCurrentRows({source:'手动保存',showToast:true,silent:false});
+  $('queryCargoBtn').onclick=queryCargoCode;$('queryProductBtn').onclick=queryProductName;$('productDbBtn').onclick=showProductDb;$('historyBtn').onclick=showHistory;$('clearCurrentBtn').onclick=clearCurrentTable;$('clearAllBtn').onclick=clearAllData;
+  $('singleStatBtn').onclick=()=>runStat('single',true);$('allStatBtn').onclick=()=>runStat('all',true);$('singleExportBtn').onclick=()=>exportStat('single');$('allExportBtn').onclick=()=>exportStat('all');
+  $('exportBackupBtn').onclick=()=>exportBackup(true);$('manualRestorePointBtn').onclick=createManualRestorePoint;$('restoreBeforeImportBtn').onclick=restoreBeforeImport;$('importJsonInput').onchange=importJsonBackup;$('dialogCloseBtn').onclick=()=>els.dialog.close();
+  els.storeSelect.onchange=handleContextChange;els.purchaseDate.onchange=handleContextChange;
+  els.entryBody.addEventListener('input',onTableInput);els.entryBody.addEventListener('keydown',onTableKeydown);els.entryBody.addEventListener('click',onTableClick);
+  els.damageMatchBtn.onclick=()=>matchDamageCargoCode(true);
+  els.damageCargoCode.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();matchDamageCargoCode(true)}});
+  els.damageCargoCode.addEventListener('blur',()=>{if(els.damageCargoCode.value.trim())matchDamageCargoCode(false)});
+  els.damageQuantity.oninput=updateDamageAmountFromQuantity;els.damageType.onchange=trySaveDamageRecord;$('damageStatBtn').onclick=()=>runDamageStat(true);$('damageExportBtn').onclick=exportCurrentDamageStat;els.damageResultWrap.onclick=onDamageTableClick;els.dialogBody.onclick=onDialogClick;
+  window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
+}
+function uid(){return crypto.randomUUID?crypto.randomUUID():'id_'+Date.now()+'_'+Math.random().toString(36).slice(2)}
+function defaultData(){return{version:3,stores:[{id:uid(),name:'Langdeng-1834109'}],records:[],damageRecords:[],productPrices:[],logs:[]}}
+function loadData(){
+  let raw=localStorage.getItem(STORAGE_KEY); if(!raw){for(const k of OLD_KEYS){raw=localStorage.getItem(k);if(raw)break}}
+  try{return normalizeData(raw?JSON.parse(raw):defaultData())}catch{return defaultData()}
+}
+function normalizeData(input){
+  const d=defaultData();
+  const stores=Array.isArray(input.stores)?input.stores:d.stores;if(!stores.length)stores.push({id:uid(),name:'默认店铺'});
+  const productPrices=Array.isArray(input.productPrices)?input.productPrices.map(p=>({id:p.id||uid(),productName:String(p.productName||p.name||'').trim(),unitCost:num(p.unitCost||p.price),updatedAt:p.updatedAt||nowText()})).filter(p=>p.productName):[];
+  const records=Array.isArray(input.records)?input.records.map(r=>({id:r.id||uid(),storeId:r.storeId||stores[0].id,date:normDate(r.date||r.purchaseDate)||dateValue(new Date()),cargoCode:String(r.cargoCode||r.sku||'').trim(),productName:String(r.productName||'').trim(),unitCost:num(r.unitCost),quantity:Number.isFinite(parseInt(r.quantity,10))?parseInt(r.quantity,10):1})).filter(r=>r.cargoCode||r.productName||r.unitCost>0):[];
+  const damageRecords=Array.isArray(input.damageRecords)?input.damageRecords.map(x=>({id:x.id||uid(),purchaseRecordId:x.purchaseRecordId||'',storeId:x.storeId||stores[0].id,storeName:x.storeName||'',purchaseDate:normDate(x.purchaseDate||x.date)||'',damageDate:normDate(x.damageDate||x.purchaseDate||x.date)||dateValue(new Date()),cargoCode:String(x.cargoCode||x.sku||'').trim(),productName:String(x.productName||'').trim(),purchaseUnitCost:num(x.purchaseUnitCost||x.unitCost),purchaseQuantity:num(x.purchaseQuantity||x.quantity),purchaseAmount:num(x.purchaseAmount),damageType:x.damageType||x.type||'其他',damageQuantity:num(x.damageQuantity||x.quantity),damageAmount:num(x.damageAmount||x.amount),remark:x.remark||'',createdAt:x.createdAt||nowText()})).filter(x=>x.cargoCode):[];
+  const logs=Array.isArray(input.logs)?input.logs.slice(0,MAX_LOGS):[];
+  return{version:3,stores,records,damageRecords,productPrices,logs};
+}
+function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify(data))}
+function renderStores(selectedId){const cur=selectedId||els.storeSelect.value||data.stores[0]?.id;els.storeSelect.innerHTML='';data.stores.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;els.storeSelect.appendChild(o)});if(data.stores.some(s=>s.id===cur))els.storeSelect.value=cur;if(!els.storeSelect.value&&data.stores[0])els.storeSelect.value=data.stores[0].id}
+function storeName(id){return data.stores.find(s=>s.id===id)?.name||'未知店铺'}
+function currentStoreName(){return storeName(activeStoreId)}
+function handleContextChange(){
+  const ns=els.storeSelect.value,nd=els.purchaseDate.value;if(ns===activeStoreId&&nd===activeDate)return;
+  if(dirty){setStatus('切换前正在自动保存当前数据...');const ok=saveCurrentRows({source:'切换前自动保存',showToast:false,silent:false,storeId:activeStoreId,date:activeDate});if(!ok){els.storeSelect.value=activeStoreId;els.purchaseDate.value=activeDate;return}}
+  activeStoreId=ns;activeDate=nd;loadCurrentRows();runStat('single',false);runStat('all',false);runDamageStat(false)
+}
+function loadCurrentRows(){currentRows=data.records.filter(r=>r.storeId===activeStoreId&&r.date===activeDate).map(r=>({...r}));if(!currentRows.length)currentRows=[blankRow()];dirty=false;clearAutoSaveTimer();renderRows();setStatus('当前数据已载入')}
+function blankRow(){return{id:uid(),storeId:activeStoreId,date:activeDate,cargoCode:'',productName:'',unitCost:'',quantity:1}}
+function renderRows(){
+  els.entryBody.innerHTML='';
+  currentRows.forEach((r,i)=>{const tr=document.createElement('tr');if(highlightCargoCode&&r.cargoCode===highlightCargoCode)tr.classList.add('highlight-row');tr.innerHTML=`
+  <td>${i+1}</td>
+  <td><input class="${isDuplicateCargoInDraft(i)?'duplicate-warning':''}" type="text" data-field="cargoCode" data-index="${i}" value="${esc(r.cargoCode||'')}" placeholder="货件编码"></td>
+  <td><input type="text" list="productNameList" data-field="productName" data-index="${i}" value="${esc(r.productName||'')}" placeholder="产品名称"></td>
+  <td><input class="num" type="number" step="0.01" min="0" data-field="unitCost" data-index="${i}" value="${r.unitCost??''}" placeholder="0.00"></td>
+  <td><input class="num" type="number" step="1" min="0" data-field="quantity" data-index="${i}" value="${r.quantity??''}" placeholder="1"></td>
+  <td class="num row-total">${money(total(r))}</td>
+  <td><button class="ghost" data-action="sync-price" data-index="${i}">更新单价库</button> <button class="danger" data-action="delete-row" data-index="${i}">删除</button></td>`;els.entryBody.appendChild(tr)});
+  updateSummary();if(highlightCargoCode){setTimeout(()=>{document.querySelectorAll('.highlight-row').forEach(x=>x.classList.remove('highlight-row'));highlightCargoCode=''},2400)}
+}
+function onTableInput(e){
+  const inp=e.target.closest('input[data-field]');if(!inp)return;const i=+inp.dataset.index,field=inp.dataset.field;if(!currentRows[i])return;
+  currentRows[i][field]=field==='cargoCode'||field==='productName'?inp.value.trim():inp.value;
+  if(field==='productName')autoFillPrice(i);
+  const tr=inp.closest('tr');if(tr)tr.querySelector('.row-total').textContent=money(total(currentRows[i]));
+  updateSummary();checkDuplicateCargoRealtime();markDirty()
+}
+function onTableKeydown(e){
+  const inp=e.target.closest('input[data-field]');
+  if(!inp||e.key!=='Enter')return;
+  const field=inp.dataset.field;
+  if(!['cargoCode','productName','unitCost','quantity'].includes(field))return;
+  e.preventDefault();
+  const i=+inp.dataset.index;
+  if(!currentRows[i])return;
+  const row=currentRows[i];
+  const hasContent=String(row.cargoCode||'').trim()||String(row.productName||'').trim()||num(row.unitCost)>0||num(row.quantity)>0;
+  if(!hasContent)return;
+  if(i===currentRows.length-1){
+    currentRows.push(blankRow());
+    markDirty();
+    renderRows();
+    focusCargo(currentRows.length-1);
+  }else{
+    focusCargo(i+1);
+  }
+}
+function onTableClick(e){
+  const del=e.target.closest('[data-action="delete-row"]');if(del){currentRows.splice(+del.dataset.index,1);if(!currentRows.length)currentRows=[blankRow()];markDirty();renderRows();return}
+  const sync=e.target.closest('[data-action="sync-price"]');if(sync)syncProductPriceFromRow(+sync.dataset.index)
+}
+function focusCargo(i){setTimeout(()=>els.entryBody.querySelector(`input[data-field="cargoCode"][data-index="${i}"]`)?.focus(),0)}
+function autoFillPrice(i){const row=currentRows[i];const p=findProduct(row.productName);if(p&&(!row.unitCost||num(row.unitCost)===0)){row.unitCost=p.unitCost;setTimeout(()=>renderRows(),0)}}
+function findProduct(name){const key=normName(name);return data.productPrices.find(p=>normName(p.productName)===key)}
+function syncProductPriceFromRow(i){
+  const r=currentRows[i];if(!r||!r.productName){alert('请先填写产品名称');return}const price=num(r.unitCost);if(price<=0){alert('请先填写有效单价');return}
+  const p=findProduct(r.productName);if(p){const before=money(p.unitCost);p.unitCost=round2(price);p.updatedAt=nowText();addLog('更新产品单价',{cargoCode:r.cargoCode,date:activeDate,storeName:currentStoreName(),before:`${p.productName}：${before}`,after:`${p.productName}：${money(price)}`,remark:'从采购记录同步'})}
+  else{data.productPrices.push({id:uid(),productName:r.productName,unitCost:round2(price),updatedAt:nowText()});addLog('新增产品单价',{cargoCode:r.cargoCode,date:activeDate,storeName:currentStoreName(),before:'',after:`${r.productName}：${money(price)}`,remark:'从采购记录同步'})}
+  persist();renderProductDatalist();toast('产品单价库已更新')
+}
+function markDirty(){dirty=true;setStatus('有未保存修改，8秒后自动保存');scheduleAutoSave()}
+function setStatus(t){els.saveStatus.textContent=t}
+function scheduleAutoSave(){clearAutoSaveTimer();autoSaveTimer=setTimeout(()=>{if(dirty)saveCurrentRows({source:'自动保存',showToast:false,silent:true})},AUTO_SAVE_DELAY)}
+function clearAutoSaveTimer(){if(autoSaveTimer)clearTimeout(autoSaveTimer);autoSaveTimer=null}
+function updateSummary(){const rows=currentRows.filter(r=>r.cargoCode||r.productName);els.totalQty.textContent=rows.reduce((s,r)=>s+num(r.quantity),0);els.totalAmount.textContent=money(rows.reduce((s,r)=>s+total(r),0))}
+function saveCurrentRows(opt={}){
+  const {source='手动保存',showToast=true,silent=false,storeId=activeStoreId,date=activeDate}=opt;clearAutoSaveTimer();
+  const prep=prepareRows(currentRows,storeId,date);if(!prep.ok){setStatus('保存失败：'+prep.message);if(!silent)alert(prep.message);return false}
+  const dup=findDuplicate(prep.rows,storeId,date);if(dup){const msg=`货件编码“${dup.cargoCode}”已存在于 ${dup.date} / ${storeName(dup.storeId)}，每个货件编码必须唯一。`;setStatus('保存失败：货件编码重复');if(!silent)alert(msg);return false}
+  const old=data.records.filter(r=>r.storeId===storeId&&r.date===date).map(r=>({...r}));
+  buildPurchaseLogs(old,prep.rows,source,storeId,date).forEach(x=>addLog(x.action,x.detail));
+  data.records=data.records.filter(r=>!(r.storeId===storeId&&r.date===date));data.records.push(...prep.rows);persist();
+  if(storeId===activeStoreId&&date===activeDate){currentRows=prep.rows.length?prep.rows.map(r=>({...r})):[blankRow()];dirty=false;renderRows()}
+  setStatus(`${source}成功：${new Date().toLocaleTimeString()}`);runStat('single',false);runStat('all',false);runDamageStat(false);if(showToast)toast('当前数据已保存');return true
+}
+function prepareRows(rows,storeId,date){
+  const out=[],seen=new Set();
+  for(const raw of rows){const cargoCode=String(raw.cargoCode||'').trim(),productName=String(raw.productName||'').trim();const has=!!cargoCode||!!productName||num(raw.unitCost)>0||num(raw.quantity)>1;if(!has)continue;if(!cargoCode)return{ok:false,message:'存在没有货件编码的记录，请补全或删除该行。'};const k=cargoCode.toLowerCase();if(seen.has(k))return{ok:false,message:`当前表格中货件编码“${cargoCode}”重复。`};seen.add(k);out.push({id:raw.id||uid(),storeId,date,cargoCode,productName,unitCost:round2(num(raw.unitCost)),quantity:Number.isFinite(parseInt(raw.quantity,10))?parseInt(raw.quantity,10):1})}
+  return{ok:true,rows:out}
+}
+function findDuplicate(rows,ctxStore,ctxDate){const codes=new Set(rows.map(r=>r.cargoCode.toLowerCase()));return data.records.find(r=>!(r.storeId===ctxStore&&r.date===ctxDate)&&codes.has(String(r.cargoCode||'').toLowerCase()))}
+function buildPurchaseLogs(oldRows,newRows,source,storeId,date){
+  const logs=[],oldById=new Map(oldRows.map(r=>[r.id,r])),newById=new Map(newRows.map(r=>[r.id,r]));
+  newRows.forEach(r=>{const o=oldById.get(r.id);if(!o)logs.push({action:'新增采购记录',detail:{storeId,storeName:storeName(storeId),date,cargoCode:r.cargoCode,before:'',after:purchaseSummary(r),remark:source}});else if(o.cargoCode!==r.cargoCode||o.productName!==r.productName||num(o.unitCost)!==num(r.unitCost)||num(o.quantity)!==num(r.quantity))logs.push({action:'修改采购记录',detail:{storeId,storeName:storeName(storeId),date,cargoCode:r.cargoCode,before:purchaseSummary(o),after:purchaseSummary(r),remark:source}})});
+  oldRows.forEach(r=>{if(!newById.has(r.id))logs.push({action:'删除采购记录',detail:{storeId,storeName:storeName(storeId),date,cargoCode:r.cargoCode,before:purchaseSummary(r),after:'',remark:source}})});
+  return logs
+}
+function purchaseSummary(r){return `货件编码：${r.cargoCode}；产品：${r.productName||''}；单价：${money(r.unitCost)}；数量：${r.quantity}；合计：${money(total(r))}`}
+function addStore(){const name=prompt('请输入新店铺名称：');if(!name?.trim())return;const n=name.trim();if(data.stores.some(s=>s.name===n)){alert('店铺名称已存在');return}const s={id:uid(),name:n};data.stores.push(s);addLog('新增店铺',{storeId:s.id,storeName:n,after:n});persist();renderStores(s.id);activeStoreId=s.id;loadCurrentRows();toast('店铺已添加')}
+function renameStore(){const s=data.stores.find(x=>x.id===activeStoreId);if(!s)return;const name=prompt('请输入新的店铺名称：',s.name);if(!name?.trim())return;const n=name.trim();if(data.stores.some(x=>x.id!==s.id&&x.name===n)){alert('店铺名称已存在');return}const old=s.name;s.name=n;data.damageRecords.forEach(d=>{if(d.storeId===s.id)d.storeName=n});addLog('修改店铺名称',{storeId:s.id,storeName:n,before:old,after:n});persist();renderStores(s.id);toast('店铺名称已修改')}
+function deleteStore(){if(!requirePassword())return;if(data.stores.length<=1){alert('至少需要保留一个店铺');return}const id=activeStoreId,name=currentStoreName(),pc=data.records.filter(r=>r.storeId===id).length,dc=data.damageRecords.filter(r=>r.storeId===id).length;if(!confirm(`确认删除店铺“${name}”吗？\n该店铺下的 ${pc} 条采购记录和 ${dc} 条货损记录也会被删除，此操作不可恢复。`))return;data.stores=data.stores.filter(s=>s.id!==id);data.records=data.records.filter(r=>r.storeId!==id);data.damageRecords=data.damageRecords.filter(r=>r.storeId!==id);addLog('删除店铺',{storeId:id,storeName:name,before:`采购${pc}条，货损${dc}条`,after:'已删除',remark:'密码验证通过'});persist();renderStores(data.stores[0].id);activeStoreId=data.stores[0].id;loadCurrentRows();runDamageStat(false);toast('店铺已删除')}
+function clearCurrentTable(){if(!requirePassword())return;if(!confirm(`确认清空“${currentStoreName()} / ${activeDate}”的当前表格吗？此操作会立即保存。`))return;const count=data.records.filter(r=>r.storeId===activeStoreId&&r.date===activeDate).length;data.records=data.records.filter(r=>!(r.storeId===activeStoreId&&r.date===activeDate));addLog('清空当前表格',{storeId:activeStoreId,storeName:currentStoreName(),date:activeDate,before:`${count}条采购记录`,after:'已清空',remark:'密码验证通过'});persist();currentRows=[blankRow()];dirty=false;clearAutoSaveTimer();renderRows();runStat('single',false);runStat('all',false);toast('当前表格已清空')}
+function clearAllData(){if(!requirePassword())return;const text=prompt('此操作会清空所有店铺、采购记录、货损记录、产品单价库和历史记录。请输入“确认清空”继续：');if(text!=='确认清空')return;exportBackup(false);data=defaultData();addLog('清除所有数据',{before:'全部数据',after:'已清空并重置',remark:'已自动导出备份'});persist();renderStores(data.stores[0].id);activeStoreId=data.stores[0].id;activeDate=dateValue(new Date());els.purchaseDate.value=activeDate;loadCurrentRows();runStat('single',false);runStat('all',false);runDamageStat(false);toast('已清空全部数据，并已自动导出备份')}
+function requirePassword(){const p=prompt('请输入操作密码：');if(p!==OP_PASSWORD){alert('密码错误，操作已取消');return false}return true}
+
+function queryProductName(){
+  const q=prompt('请输入要查询的产品名称：');if(!q?.trim())return;
+  const kw=normName(q);
+  const rows=data.records.filter(r=>normName(r.productName).includes(kw)).sort((a,b)=>b.date.localeCompare(a.date));
+  els.dialogTitle.textContent=`产品名称查询结果：${q.trim()}`;
+  els.dialogBody.innerHTML=rows.length?buildTable(rows.map(r=>({日期:r.date,店铺:storeName(r.storeId),货件编码:r.cargoCode,产品名称:r.productName||'',单价成本:money(r.unitCost),数量:r.quantity,货件合计:money(total(r)),是否货损:data.damageRecords.some(d=>d.cargoCode===r.cargoCode)?'是':'否',操作:`<button class="primary" data-action="goto-record" data-id="${r.id}">回到这一页</button>`})),false):'<div class="empty">没有找到采购记录</div>';
+  els.dialog.showModal()
+}
+
+function queryCargoCode(){const q=prompt('请输入要查询的货件编码：');if(!q?.trim())return;const kw=q.trim().toLowerCase();const exact=data.records.filter(r=>(r.cargoCode||'').toLowerCase()===kw);const rows=(exact.length?exact:data.records.filter(r=>(r.cargoCode||'').toLowerCase().includes(kw))).sort((a,b)=>b.date.localeCompare(a.date));els.dialogTitle.textContent=`货件编码查询结果：${q.trim()}`;els.dialogBody.innerHTML=rows.length?buildTable(rows.map(r=>({日期:r.date,店铺:storeName(r.storeId),货件编码:r.cargoCode,产品名称:r.productName||'',单价成本:money(r.unitCost),数量:r.quantity,货件合计:money(total(r)),操作:`<button class="primary" data-action="goto-record" data-id="${r.id}">回到这一页</button>`})),false):'<div class="empty">没有找到采购记录</div>';els.dialog.showModal()}
+function onDialogClick(e){
+  const go=e.target.closest('[data-action="goto-record"]');if(go){const r=data.records.find(x=>x.id===go.dataset.id);if(r)goToRecord(r);return}
+  const clear=e.target.closest('[data-action="clear-logs"]');if(clear){clearLogs();return}
+  const addP=e.target.closest('[data-action="add-product"]');if(addP){addProductFromDialog();return}
+  const delP=e.target.closest('[data-action="delete-product"]');if(delP){deleteProduct(delP.dataset.id);return}
+  const saveP=e.target.closest('[data-action="save-product-row"]');if(saveP){saveProductRow(saveP.dataset.id);return}
+}
+function goToRecord(r){if(switchToContext(r.storeId,r.date,r.cargoCode)){els.dialog.close();$('purchaseSection').scrollIntoView({behavior:'smooth',block:'start'})}}
+function switchToContext(storeId,date,cargo){if(dirty){const ok=saveCurrentRows({source:'跳转前自动保存',showToast:false,silent:false,storeId:activeStoreId,date:activeDate});if(!ok)return false}activeStoreId=storeId;activeDate=date;renderStores(storeId);els.purchaseDate.value=date;highlightCargoCode=cargo;loadCurrentRows();return true}
+function runStat(type,showToast=true){const rows=getStatRows(type),amount=rows.reduce((s,r)=>s+total(r),0);if(type==='single')els.singleStatAmount.textContent=money(amount);else els.allStatAmount.textContent=money(amount);if(showToast)toast('统计完成')}
+function getStatRows(type){const start=type==='single'?els.singleStart.value:els.allStart.value,end=type==='single'?els.singleEnd.value:els.allEnd.value;return data.records.filter(r=>(!start||r.date>=start)&&(!end||r.date<=end)&&(type==='single'?r.storeId===activeStoreId:true))}
+function exportStat(type){const rows=getStatRows(type);if(!rows.length){alert('当前日期区间没有可导出的数据');return}const mapped=mapPurchase(rows);mapped.push({日期:'合计',店铺:'',货件编码:'',产品名称:'',单价成本:'',数量:rows.reduce((s,r)=>s+num(r.quantity),0),货件合计:money(rows.reduce((s,r)=>s+total(r),0))});exportWorkbook(`${type==='single'?'单店统计_'+currentStoreName():'全部店铺统计'}_${stamp()}.xlsx`,[{name:'统计明细',rows:mapped}])}
+function matchDamageCargoCode(showAlert=true){const code=els.damageCargoCode.value.trim();resetDamage(false);if(!code){setDamageStatus('等待输入货件编码');return}const r=data.records.find(x=>(x.cargoCode||'').toLowerCase()===code.toLowerCase());if(!r){setDamageStatus('未找到采购记录');if(showAlert)alert('没有找到该货件编码对应的采购记录。请先在采购录入中保存该货件编码。');return}currentDamageMatch=r;els.matchPurchaseDate.textContent=r.date;els.matchStore.textContent=storeName(r.storeId);els.matchProductName.textContent=r.productName||'-';els.matchUnitCost.textContent=money(r.unitCost);els.matchQuantity.textContent=r.quantity;els.matchPurchaseAmount.textContent=money(total(r));els.damageDate.value=r.date;els.damageQuantity.value=r.quantity||1;els.damageAmount.value=money(total(r));els.damageType.value='';setDamageStatus('已匹配采购数据，请选择货损类型')}
+function resetDamage(clearCode=true){currentDamageMatch=null;['matchPurchaseDate','matchStore','matchProductName','matchUnitCost','matchQuantity','matchPurchaseAmount'].forEach(id=>els[id].textContent='-');if(clearCode)els.damageCargoCode.value='';els.damageQuantity.value=1;els.damageAmount.value='0.00';els.damageRemark.value='';els.damageType.value=''}
+function setDamageStatus(t){els.damageMatchStatus.textContent=t}
+function updateDamageAmountFromQuantity(){if(currentDamageMatch)els.damageAmount.value=money(num(currentDamageMatch.unitCost)*num(els.damageQuantity.value))}
+function trySaveDamageRecord(){const type=els.damageType.value;if(!type)return;if(!currentDamageMatch){alert('请先输入货件编码并匹配采购数据。');els.damageType.value='';return}if(data.damageRecords.some(d=>(d.cargoCode||'').toLowerCase()===currentDamageMatch.cargoCode.toLowerCase())){if(!confirm(`货件编码“${currentDamageMatch.cargoCode}”已经存在货损记录，是否继续新增一条？`)){els.damageType.value='';return}}const d={id:uid(),purchaseRecordId:currentDamageMatch.id,storeId:currentDamageMatch.storeId,storeName:storeName(currentDamageMatch.storeId),purchaseDate:currentDamageMatch.date,damageDate:els.damageDate.value||currentDamageMatch.date,cargoCode:currentDamageMatch.cargoCode,productName:currentDamageMatch.productName||'',purchaseUnitCost:num(currentDamageMatch.unitCost),purchaseQuantity:num(currentDamageMatch.quantity),purchaseAmount:total(currentDamageMatch),damageType:type,damageQuantity:num(els.damageQuantity.value),damageAmount:round2(num(els.damageAmount.value)),remark:els.damageRemark.value.trim(),createdAt:nowText()};data.damageRecords.unshift(d);addLog('新增货损记录',{storeId:d.storeId,storeName:d.storeName,date:d.damageDate,cargoCode:d.cargoCode,before:'',after:damageSummary(d),remark:'选择货损类型后自动保存'});persist();toast(`已保存货损记录：${d.cargoCode}｜${d.damageType}`);resetDamage(true);setDamageStatus('货损记录已保存，可继续输入下一条');runDamageStat(false);els.damageCargoCode.focus()}
+function damageSummary(d){return `产品：${d.productName||''}；类型：${d.damageType}；货损日期：${d.damageDate}；数量：${d.damageQuantity}；金额：${money(d.damageAmount)}；备注：${d.remark||''}`}
+function getDamageRows(){const start=els.damageStart.value,end=els.damageEnd.value,scope=els.damageScope.value,type=els.damageTypeFilter.value;return data.damageRecords.filter(d=>(!start||d.damageDate>=start)&&(!end||d.damageDate<=end)&&(scope==='current'?d.storeId===activeStoreId:true)&&(type==='all'?true:d.damageType===type)).sort((a,b)=>b.damageDate.localeCompare(a.damageDate)||String(b.createdAt).localeCompare(String(a.createdAt)))}
+function runDamageStat(showToast=true){const rows=getDamageRows();els.damageTotalQty.textContent=rows.reduce((s,r)=>s+num(r.damageQuantity),0);els.damageTotalAmount.textContent=money(rows.reduce((s,r)=>s+num(r.damageAmount),0));renderDamage(rows);if(showToast)toast('货损统计已更新')}
+function renderDamage(rows){
+  if(!rows.length){els.damageResultWrap.innerHTML='<div class="empty">当前条件下没有货损记录</div>';return}
+  const summary=buildDamageSummary(rows);
+  const detail=buildTable(rows.map(d=>({货损日期:d.damageDate,采购日期:d.purchaseDate,店铺:d.storeName||storeName(d.storeId),货件编码:d.cargoCode,产品名称:d.productName||'',货损类型:d.damageType,采购单价:money(d.purchaseUnitCost),采购数量:d.purchaseQuantity,货损数量:d.damageQuantity,货损金额:money(d.damageAmount),备注:d.remark||'',操作:`<button class="ghost" data-action="damage-goto" data-id="${d.id}">查看采购记录</button> <button class="danger" data-action="damage-delete" data-id="${d.id}">删除</button>`})),false);
+  els.damageResultWrap.innerHTML=summary+detail
+}
+function buildDamageSummary(rows){
+  const byType={};const byStore={};const byProduct={};
+  rows.forEach(d=>{addAgg(byType,d.damageType,d);addAgg(byStore,d.storeName||storeName(d.storeId),d);addAgg(byProduct,d.productName||'未填产品名称',d)});
+  const topProduct=Object.entries(byProduct).sort((a,b)=>b[1].amount-a[1].amount).slice(0,8).map(([k,v])=>({产品名称:k,货损数量:v.qty,货损金额:money(v.amount)}));
+  return `<div style="padding:10px"><div class="grid"><div>${buildTable(Object.entries(byType).map(([k,v])=>({货损类型:k,数量:v.qty,金额:money(v.amount)})),true)}</div><div>${buildTable(Object.entries(byStore).map(([k,v])=>({店铺:k,数量:v.qty,金额:money(v.amount)})),true)}</div></div><div class="mini-table">${buildTable(topProduct,true)}</div></div>`
+}
+function addAgg(obj,key,d){if(!obj[key])obj[key]={qty:0,amount:0};obj[key].qty+=num(d.damageQuantity);obj[key].amount+=num(d.damageAmount)}
+
+function onDamageTableClick(e){const go=e.target.closest('[data-action="damage-goto"]');if(go){const d=data.damageRecords.find(x=>x.id===go.dataset.id);const r=d&&(data.records.find(x=>x.id===d.purchaseRecordId)||data.records.find(x=>x.cargoCode===d.cargoCode));if(r){switchToContext(r.storeId,r.date,r.cargoCode);$('purchaseSection').scrollIntoView({behavior:'smooth',block:'start'})}else alert('原采购记录不存在，可能已被删除。');return}const del=e.target.closest('[data-action="damage-delete"]');if(del)deleteDamage(del.dataset.id)}
+function deleteDamage(id){if(!requirePassword())return;const d=data.damageRecords.find(x=>x.id===id);if(!d)return;if(!confirm(`确认删除货件编码“${d.cargoCode}”的货损记录吗？`))return;data.damageRecords=data.damageRecords.filter(x=>x.id!==id);addLog('删除货损记录',{storeId:d.storeId,storeName:d.storeName||storeName(d.storeId),date:d.damageDate,cargoCode:d.cargoCode,before:damageSummary(d),after:'已删除',remark:'密码验证通过'});persist();runDamageStat(false);toast('货损记录已删除')}
+function exportCurrentDamageStat(){const rows=getDamageRows();if(!rows.length){alert('当前条件下没有可导出的货损记录');return}const m=mapDamage(rows);m.push({货损日期:'合计',采购日期:'',店铺:'',货件编码:'',产品名称:'',货损类型:'',采购单价:'',采购数量:'',采购金额:'',货损数量:rows.reduce((s,r)=>s+num(r.damageQuantity),0),货损金额:money(rows.reduce((s,r)=>s+num(r.damageAmount),0)),备注:'',创建时间:''});exportWorkbook(`货损统计_${stamp()}.xlsx`,[{name:'货损统计',rows:m}])}
+function showProductDb(){els.dialogTitle.textContent='产品采购单价数据库';renderProductDb();els.dialog.showModal()}
+function renderProductDb(keyword=''){const key=normName(keyword);const rows=data.productPrices.slice().filter(p=>!key||normName(p.productName).includes(key)).sort((a,b)=>a.productName.localeCompare(b.productName,'zh-CN')).map(p=>({产品名称:`<input type="text" id="pn_${p.id}" value="${esc(p.productName)}">`,采购单价:`<input type="number" step="0.01" min="0" id="pp_${p.id}" value="${p.unitCost}">`,更新时间:p.updatedAt||'',操作:`<button class="primary" data-action="save-product-row" data-id="${p.id}">保存</button> <button class="danger" data-action="delete-product" data-id="${p.id}">删除</button>`}));els.dialogBody.innerHTML=`<div style="padding:10px;display:flex;gap:10px;flex-wrap:wrap"><input id="productSearchInput" type="text" placeholder="搜索产品" oninput="renderProductDb(this.value)"><input id="newProductName" type="text" placeholder="产品名称"><input id="newProductPrice" type="number" step="0.01" min="0" placeholder="采购单价"><button class="primary" data-action="add-product">新增产品</button><span class="hint">产品名称匹配后，采购表单价会自动带出。</span></div>${rows.length?buildTable(rows,false):'<div class="empty">暂无产品单价数据</div>'}`}
+function addProductFromDialog(){const n=$('newProductName').value.trim(),p=num($('newProductPrice').value);if(!n){alert('请填写产品名称');return}if(p<=0){alert('请填写有效采购单价');return}if(findProduct(n)){alert('产品名称已存在');return}data.productPrices.push({id:uid(),productName:n,unitCost:round2(p),updatedAt:nowText()});addLog('新增产品单价',{after:`${n}：${money(p)}`});persist();renderProductDatalist();renderProductDb();toast('产品已新增')}
+function saveProductRow(id){const item=data.productPrices.find(p=>p.id===id);if(!item)return;const n=$(`pn_${id}`).value.trim(),p=num($(`pp_${id}`).value);if(!n){alert('产品名称不能为空');return}if(p<=0){alert('采购单价必须大于0');return}if(data.productPrices.some(x=>x.id!==id&&normName(x.productName)===normName(n))){alert('产品名称已存在');return}const before=`${item.productName}：${money(item.unitCost)}`;item.productName=n;item.unitCost=round2(p);item.updatedAt=nowText();addLog('修改产品单价',{before,after:`${n}：${money(p)}`});persist();renderProductDatalist();renderProductDb();toast('产品单价已保存')}
+function deleteProduct(id){if(!requirePassword())return;const item=data.productPrices.find(p=>p.id===id);if(!item)return;if(!confirm(`确认删除产品“${item.productName}”吗？`))return;data.productPrices=data.productPrices.filter(p=>p.id!==id);addLog('删除产品单价',{before:`${item.productName}：${money(item.unitCost)}`,after:'已删除',remark:'密码验证通过'});persist();renderProductDatalist();renderProductDb();toast('产品已删除')}
+function showHistory(){els.dialogTitle.textContent='历史操作记录';if(!data.logs.length)els.dialogBody.innerHTML='<div class="empty">暂无历史操作记录</div>';else els.dialogBody.innerHTML=`<div style="padding:10px;display:flex;gap:10px;flex-wrap:wrap"><button class="ghost" onclick="exportHistory()">导出历史记录</button><button class="danger" data-action="clear-logs">清空历史记录</button><span class="hint">最多保留最近 ${MAX_LOGS} 条。</span></div>${buildTable(mapLogs(data.logs),true)}`;els.dialog.showModal()}
+function addLog(action,d={}){data.logs.unshift({id:uid(),time:nowText(),action,storeId:d.storeId||'',storeName:d.storeName||'',date:d.date||'',cargoCode:d.cargoCode||'',before:stringify(d.before),after:stringify(d.after),remark:d.remark||''});if(data.logs.length>MAX_LOGS)data.logs=data.logs.slice(0,MAX_LOGS)}
+function clearLogs(){if(!requirePassword())return;if(!confirm('确认清空历史操作记录吗？'))return;data.logs=[];addLog('清空历史记录',{before:'历史记录',after:'已清空',remark:'密码验证通过'});persist();showHistory();toast('历史记录已清空')}
+function exportHistory(){if(!data.logs.length){alert('没有可导出的历史记录');return}exportWorkbook(`历史操作记录_${stamp()}.xlsx`,[{name:'历史操作记录',rows:mapLogs(data.logs)}])}
+function exportBackup(showToast=true){const s=stamp();exportJson(`采购数据备份_${s}.json`);exportExcel(`采购数据备份_${s}.xlsx`);if(showToast)toast('已导出 Excel 和 JSON 两个备份文件')}
+function exportJson(filename){downloadBlob(new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'}),filename||`采购数据备份_${stamp()}.json`)}
+function exportExcel(filename){exportWorkbook(filename||`采购数据备份_${stamp()}.xlsx`,[{name:'采购记录',rows:mapPurchase(data.records)},{name:'店铺',rows:data.stores.map(s=>({店铺ID:s.id,店铺名称:s.name}))},{name:'产品单价库',rows:mapProducts(data.productPrices)},{name:'货损记录',rows:mapDamage(data.damageRecords)},{name:'历史操作记录',rows:mapLogs(data.logs)}])}
+async function importJsonBackup(e){
+  const f=e.target.files?.[0];e.target.value='';if(!f)return;
+  try{
+    const parsed=JSON.parse(await f.text());
+    const normalized=normalizeData(parsed);
+    const summary=`即将导入：\n店铺：${normalized.stores.length} 个\n采购记录：${normalized.records.length} 条\n产品单价库：${normalized.productPrices.length} 个\n货损记录：${normalized.damageRecords.length} 条\n历史记录：${normalized.logs.length} 条`;
+    const t=prompt(`${summary}\n\n导入 JSON 会覆盖当前所有数据。请输入“确认导入”继续：`);
+    if(t!=='确认导入')return;
+    localStorage.setItem(BEFORE_IMPORT_KEY,JSON.stringify(data));
+    exportJson(`导入前自动备份_${stamp()}.json`);
+    data=normalized;
+    addLog('导入JSON备份',{after:`店铺${data.stores.length}个，采购${data.records.length}条，产品${data.productPrices.length}个，货损${data.damageRecords.length}条`,remark:f.name});
+    persist();renderProductDatalist();renderStores(data.stores[0]?.id);activeStoreId=els.storeSelect.value;activeDate=dateValue(new Date());els.purchaseDate.value=activeDate;loadCurrentRows();runStat('single',false);runStat('all',false);runDamageStat(false);
+    alert(`导入成功：\n店铺：${data.stores.length} 个\n采购记录：${data.records.length} 条\n产品单价库：${data.productPrices.length} 个\n货损记录：${data.damageRecords.length} 条\n历史记录：${data.logs.length} 条`);
+    toast('JSON 备份导入完成')
+  }catch{alert('导入失败：JSON 文件格式不正确')}
+}
+
+function scrollToSection(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'})}
+function renderProductDatalist(){const dl=$('productNameList');if(!dl)return;dl.innerHTML=data.productPrices.slice().sort((a,b)=>a.productName.localeCompare(b.productName,'zh-CN')).map(p=>`<option value="${esc(p.productName)}"></option>`).join('')}
+function isDuplicateCargoInDraft(index){
+  const code=String(currentRows[index]?.cargoCode||'').trim().toLowerCase();
+  if(!code)return false;
+  return currentRows.some((r,i)=>i!==index&&String(r.cargoCode||'').trim().toLowerCase()===code)||
+    data.records.some(r=>!(r.storeId===activeStoreId&&r.date===activeDate)&&String(r.cargoCode||'').trim().toLowerCase()===code);
+}
+function checkDuplicateCargoRealtime(){
+  const dup=currentRows.find((r,i)=>isDuplicateCargoInDraft(i));
+  if(dup&&String(dup.cargoCode||'').trim())setStatus(`提醒：货件编码“${dup.cargoCode}”重复，保存会被阻止`);
+}
+function createManualRestorePoint(){
+  localStorage.setItem(MANUAL_RESTORE_KEY,JSON.stringify(data));
+  exportJson(`手动恢复点_${stamp()}.json`);
+  addLog('创建恢复点',{after:'已保存浏览器内部恢复点并下载JSON',remark:'手动创建'});
+  persist();
+  toast('已创建恢复点并下载 JSON')
+}
+function restoreBeforeImport(){
+  if(!requirePassword())return;
+  const raw=localStorage.getItem(BEFORE_IMPORT_KEY);
+  if(!raw){alert('没有找到最近一次导入前的数据。');return}
+  if(!confirm('确认恢复到最近一次导入 JSON 前的数据吗？当前数据会被覆盖。'))return;
+  try{
+    exportJson(`恢复前自动备份_${stamp()}.json`);
+    const restored=normalizeData(JSON.parse(raw));
+    data=restored;
+    addLog('返回本次导入前',{after:`店铺${data.stores.length}个，采购${data.records.length}条，产品${data.productPrices.length}个，货损${data.damageRecords.length}条`,remark:'密码验证通过'});
+    persist();renderProductDatalist();renderStores(data.stores[0]?.id);activeStoreId=els.storeSelect.value;activeDate=dateValue(new Date());els.purchaseDate.value=activeDate;loadCurrentRows();runStat('single',false);runStat('all',false);runDamageStat(false);
+    toast('已恢复到本次导入前')
+  }catch{alert('恢复失败：导入前数据已损坏')}
+}
+
+function mapPurchase(records){return records.slice().sort((a,b)=>a.date.localeCompare(b.date)||storeName(a.storeId).localeCompare(storeName(b.storeId),'zh-CN')).map(r=>({日期:r.date,店铺:storeName(r.storeId),货件编码:r.cargoCode,产品名称:r.productName||'',单价成本:num(r.unitCost),数量:num(r.quantity),货件合计:Number(total(r).toFixed(2))}))}
+function mapDamage(records){return records.slice().sort((a,b)=>b.damageDate.localeCompare(a.damageDate)||String(b.createdAt).localeCompare(String(a.createdAt))).map(d=>({货损日期:d.damageDate,采购日期:d.purchaseDate,店铺:d.storeName||storeName(d.storeId),货件编码:d.cargoCode,产品名称:d.productName||'',货损类型:d.damageType,采购单价:num(d.purchaseUnitCost),采购数量:num(d.purchaseQuantity),采购金额:num(d.purchaseAmount),货损数量:num(d.damageQuantity),货损金额:num(d.damageAmount),备注:d.remark||'',创建时间:d.createdAt||''}))}
+function mapProducts(items){return items.map(p=>({产品名称:p.productName,采购单价:num(p.unitCost),更新时间:p.updatedAt||''}))}
+function mapLogs(logs){return logs.map(l=>({时间:l.time,操作类型:l.action,店铺:l.storeName||'',日期:l.date||'',货件编码:l.cargoCode||'',修改前:l.before||'',修改后:l.after||'',备注:l.remark||''}))}
+function exportWorkbook(filename,sheets){if(!window.XLSX){alert('Excel 功能库加载失败，请联网后刷新页面再试。JSON 备份不受影响。');return}const wb=XLSX.utils.book_new();sheets.forEach(s=>{XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(s.rows.length?s.rows:[{}]),s.name.slice(0,31))});XLSX.writeFile(wb,filename)}
+function buildTable(rows,escapeContent=true){const h=Object.keys(rows[0]||{});return `<table><thead><tr>${h.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${h.map(x=>`<td>${escapeContent?esc(r[x]):r[x]}</td>`).join('')}</tr>`).join('')}</tbody></table>`}
+function total(r){return round2(num(r.unitCost)*num(r.quantity))}
+function money(v){return num(v).toFixed(2)}
+function num(v){const n=Number(v);return Number.isFinite(n)?n:0}
+function round2(v){return Math.round(num(v)*100)/100}
+function normName(s){return String(s||'').trim().toLowerCase()}
+function dateValue(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function nowText(){const d=new Date();return `${dateValue(d)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`}
+function stamp(){const d=new Date();return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}_${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}${String(d.getSeconds()).padStart(2,'0')}`}
+function normDate(v){if(!v)return'';if(typeof v==='number'&&window.XLSX){const p=XLSX.SSF.parse_date_code(v);return p?`${p.y}-${String(p.m).padStart(2,'0')}-${String(p.d).padStart(2,'0')}`:''}const m=String(v).trim().replaceAll('/','-').match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);return m?`${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`:''}
+function downloadBlob(blob,filename){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u)}
+function toast(msg){els.toast.textContent=msg;els.toast.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>els.toast.classList.remove('show'),2400)}
+function stringify(v){if(v==null)return'';return typeof v==='string'?v:JSON.stringify(v)}
+function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;")}
+</script>
+</body>
+</html>
